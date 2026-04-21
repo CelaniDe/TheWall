@@ -1,0 +1,47 @@
+services:
+  mariadb:
+    image: mariadb:11.4
+    container_name: global_wall_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpassword
+      MARIADB_DATABASE: global_wall_app
+      MARIADB_USER: appuser
+      MARIADB_PASSWORD: apppassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mariadb-admin", "ping", "-h", "127.0.0.1", "-prootpassword"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - wall_net
+
+  nextjs:
+    build:
+      context: .
+      dockerfile: Dockerfile.nextjs
+    container_name: nextjs_wall
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    # expose:
+    #   - "3000"
+    ports:
+      - "3000:3000"
+    networks:
+      - wall_net
+
+volumes:
+  mariadb_data:
+
+networks:
+  wall_net:
+    driver: bridge
