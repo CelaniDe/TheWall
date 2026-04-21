@@ -21,6 +21,22 @@ services:
     networks:
       - wall_net
 
+  phpmyadmin:
+    image: phpmyadmin:5.2
+    container_name: phpmyadmin_thewall
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: rootpassword
+    depends_on:
+      - mariadb
+    networks:
+      - wall_net
+
   nextjs:
     build:
       context: .
